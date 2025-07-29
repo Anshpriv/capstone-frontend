@@ -191,7 +191,7 @@ async function getTeams() {
 }
 
 
-const API_BASE_URL = 'https://capstone-backend-1jkd.onrender.com';
+const API_BASE_URL = 'https://capstone-backend-mnwh.onrender.com';
 
 async function authenticateAdmin(username, password) {
     try {
