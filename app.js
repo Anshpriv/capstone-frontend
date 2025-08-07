@@ -220,20 +220,15 @@ async function fetchMentors() {
 // Populate mentor dropdowns
 async function populateMentorDropdowns() {
     try {
-        // Use the fetchMentors function that calls your backend
-        const mentors = await fetchMentors();
-        
-        // Find all mentor dropdown select elements
+        const mentors = await fetchMentors(); // expects array of mentor objects
+
         const mentorSelects = document.querySelectorAll('select[id^="mentor-"], select[id^="edit-mentor-"]');
-        
         mentorSelects.forEach(select => {
-            // Clear existing options
             select.innerHTML = '<option value="">Select Mentor</option>';
-            
-            // Populate with mentors from backend
+
             mentors.forEach((mentor, index) => {
                 const option = document.createElement('option');
-                option.value = index; // Use index as value (0-16)
+                option.value = index; // Or mentor.id if you prefer!
                 option.textContent = mentor.name;
                 select.appendChild(option);
             });
@@ -242,6 +237,7 @@ async function populateMentorDropdowns() {
         console.error('Error populating mentor dropdowns:', error);
     }
 }
+
 
 
 // Add showPage function if missing
