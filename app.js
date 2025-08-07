@@ -217,7 +217,6 @@ async function fetchMentors() {
 
 }
 
-// Populate mentor dropdowns
 async function populateMentorDropdowns() {
     try {
         const mentors = await fetchMentors(); // expects array of mentor objects
@@ -237,8 +236,6 @@ async function populateMentorDropdowns() {
         console.error('Error populating mentor dropdowns:', error);
     }
 }
-
-
 
 // Add showPage function if missing
 function showPage(pageId) {
