@@ -1407,10 +1407,23 @@ function mentorLogout() {
 async function loadMentorTeams() {
     if (!currentLoggedMentor) return;
     
-    const mentorIndex = parseInt(currentLoggedMentor.username.replace('mentor', '')) - 1;
+    // Get all mentors from backend to find correct index
+    const mentorsResponse = await fetch(`${API_BASE_URL}/api/mentors`);
+    const mentorsData = await mentorsResponse.json();
+    
+    // Find mentor index by matching username
+    const mentorIndex = mentorsData.mentors.findIndex(mentor => 
+        mentor.username === currentLoggedMentor.username
+    );
+    
+    if (mentorIndex === -1) {
+        console.error('Mentor not found in mentors list');
+        return;
+    }
+    
     const teams = await getTeams();
     
-    // Filter teams where current mentor is relevant (either accepted by them or pending for them)
+    // Filter teams where current mentor is relevant
     const relevantTeams = teams.filter(team => {
         // Include accepted teams by this mentor
         if (team.mentor_status === 'accepted' && team.final_mentor === currentLoggedMentor.name) {
@@ -1428,6 +1441,8 @@ async function loadMentorTeams() {
     
     displayMentorTeams(relevantTeams, mentorIndex);
 }
+
+
 async function handleHODLogin(event) {
     event.preventDefault();
     hideError('hod-login-error');
