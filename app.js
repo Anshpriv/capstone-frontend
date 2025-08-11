@@ -2358,59 +2358,6 @@ function logout() {
     showPage('welcome-page');
 }
 
-// ====== DISPLAY FUNCTIONS ======
-async function displayTeams() {
-    const teams = await getTeams();
-    const teamsContainer = document.getElementById('teams-list');
-    if (!teamsContainer) return;
-    
-    if (teams.length === 0) {
-        teamsContainer.innerHTML = '<div class="empty-state"><p>No teams registered yet.</p></div>';
-        return;
-    }
-    
-    teamsContainer.innerHTML = teams.map(team => `
-        <div class="team-card">
-            <h4>${team.name}</h4>
-            <div class="team-info">
-                <div class="team-detail">
-                    <h5>Team Leader</h5>
-                    <p>${getStudentById(team.leader)?.name} (${getStudentById(team.leader)?.department})</p>
-                </div>
-                <div class="team-detail">
-                    <h5>All Members</h5>
-                    <ul>
-                        ${team.members.map(memberId => {
-                            const student = getStudentById(memberId);
-                            return `<li>${student?.name} (${student?.department})</li>`;
-                        }).join('')}
-                    </ul>
-                </div>
-                <div class="team-detail">
-                    <h5>Department Distribution</h5>
-                    <p>${getDepartmentDistribution(team.members)}</p>
-                </div>
-                <div class="team-detail">
-                    <h5>Mentor Preferences</h5>
-                    <ul>
-                        ${team.mentor_preferences.map((mentorIndex, index) => 
-                            `<li>${index + 1}. ${appData.mentors[mentorIndex]}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-                <div class="team-detail">
-                    <h5>Project Ideas</h5>
-                    <ul>
-                        ${team.project_ideas.map((idea, index) => 
-                            `<li><strong>Idea ${index + 1}:</strong> ${idea}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-            </div>
-            <p class="registration-date"><small>Registered on: ${new Date(team.registration_date).toLocaleDateString()}</small></p>
-        </div>
-    `).join('');
-}
 
 async function displayTeamsManagement() {
     const teams = await getTeams();
