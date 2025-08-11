@@ -272,47 +272,38 @@ function showPage(pageId) {
     }
 }
 async function displayTeams() {
-    try {
-        console.log('Fetching teams for display...');
-        const teams = await getTeams();
-        console.log('Teams fetched:', teams);
-        
-        const teamsContainer = document.getElementById('teams-list');
-        if (!teamsContainer) {
-            console.error('Teams container not found');
-            return;
-        }
-        
-        if (!teams || teams.length === 0) {
-            teamsContainer.innerHTML = '<p class="no-teams">No teams registered yet.</p>';
-            return;
-        }
-        
-        // Display teams
-        teamsContainer.innerHTML = teams.map(team => `
-            <div class="team-card">
-                <h3>${team.name}</h3>
-                <p><strong>Team ID:</strong> ${team.team_id}</p>
-                <p><strong>Leader:</strong> ${getStudentNameById(team.leader)}</p>
-                <p><strong>Members:</strong> ${team.members.length}</p>
-                <div class="team-members">
-                    ${team.members.map(memberId => `
-                        <span class="member-tag">${getStudentNameById(memberId)}</span>
-                    `).join('')}
-                </div>
-                <p><strong>Status:</strong> ${team.status || 'Pending'}</p>
-                <p><strong>Assigned Mentor:</strong> ${team.assigned_mentor || 'Not assigned'}</p>
-            </div>
-        `).join('');
-        
-        console.log('Teams displayed successfully');
-    } catch (error) {
-        console.error('Error displaying teams:', error);
-        const teamsContainer = document.getElementById('teams-list');
-        if (teamsContainer) {
-            teamsContainer.innerHTML = '<p class="error">Error loading teams. Please try again.</p>';
-        }
+    const teams = await getTeams();
+    const teamsContainer = document.getElementById('teams-list');
+    if (!teamsContainer) return;
+    if (teams.length === 0) {
+        teamsContainer.innerHTML = '<div class="empty-state"><p>No teams registered yet.</p></div>';
+        return;
     }
+    teamsContainer.innerHTML = teams.map(team => `
+<div class="team-card">
+<h4>${team.name}</h4>
+<div class="team-info">
+<div class="team-detail">
+<h5>Team Leader</h5>
+<p>${getStudentById(team.leader)?.name} (${getStudentById(team.leader)?.department})</p>
+</div>
+<div class="team-detail">
+<h5>All Members</h5>
+<ul>
+                        ${team.members.map(memberId => {
+                            const student = getStudentById(memberId);
+                            return `<li>${student?.name} (${student?.department})</li>`;
+                        }).join('')}
+</ul>
+</div>
+<div class="team-detail">
+<h5>Department Distribution</h5>
+<p>${getDepartmentDistribution(team.members)}</p>
+</div>
+</div>
+<p class="registration-date"><small>Registered on: ${new Date(team.registration_date).toLocaleDateString()}</small></p>
+</div>
+    `).join('');
 }
 
 async function displayTeamsManagement() {
@@ -2368,58 +2359,7 @@ function logout() {
 }
 
 // ====== DISPLAY FUNCTIONS ======
-async function displayTeams() {
-    const teams = await getTeams();
-    const teamsContainer = document.getElementById('teams-list');
-    if (!teamsContainer) return;
-    
-    if (teams.length === 0) {
-        teamsContainer.innerHTML = '<div class="empty-state"><p>No teams registered yet.</p></div>';
-        return;
-    }
-    
-    teamsContainer.innerHTML = teams.map(team => `
-        <div class="team-card">
-            <h4>${team.name}</h4>
-            <div class="team-info">
-                <div class="team-detail">
-                    <h5>Team Leader</h5>
-                    <p>${getStudentById(team.leader)?.name} (${getStudentById(team.leader)?.department})</p>
-                </div>
-                <div class="team-detail">
-                    <h5>All Members</h5>
-                    <ul>
-                        ${team.members.map(memberId => {
-                            const student = getStudentById(memberId);
-                            return `<li>${student?.name} (${student?.department})</li>`;
-                        }).join('')}
-                    </ul>
-                </div>
-                <div class="team-detail">
-                    <h5>Department Distribution</h5>
-                    <p>${getDepartmentDistribution(team.members)}</p>
-                </div>
-                <div class="team-detail">
-                    <h5>Mentor Preferences</h5>
-                    <ul>
-                        ${team.mentor_preferences.map((mentorIndex, index) => 
-                            `<li>${index + 1}. ${appData.mentors[mentorIndex]}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-                <div class="team-detail">
-                    <h5>Project Ideas</h5>
-                    <ul>
-                        ${team.project_ideas.map((idea, index) => 
-                            `<li><strong>Idea ${index + 1}:</strong> ${idea}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-            </div>
-            <p class="registration-date"><small>Registered on: ${new Date(team.registration_date).toLocaleDateString()}</small></p>
-        </div>
-    `).join('');
-}
+
 
 async function displayTeamsManagement() {
     const teams = await getTeams();
