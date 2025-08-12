@@ -103,6 +103,7 @@ function toggleAccessCodeInput(studentSelectId, accessCodeInputId) {
     }
 }
 // Validate All Selected Students' Access Codes
+// CORRECTED: Passes studentId instead of student object
 async function validateAllAccessCodes() {
     const validations = [];
     
@@ -112,9 +113,8 @@ async function validateAllAccessCodes() {
     const leaderDept = document.getElementById('leader-department').value;
     
     if (leaderStudentId && leaderDept) {
-        const leaderStudent = getStudentById(leaderStudentId);
         validations.push(
-            validateStudentAccessCode(leaderStudent?.name, leaderAccessCode, leaderDept, 'Team Leader')
+            validateStudentAccessCode(leaderStudentId, leaderAccessCode, leaderDept, 'Team Leader')
         );
     }
     
@@ -125,9 +125,8 @@ async function validateAllAccessCodes() {
         const memberDept = document.getElementById(`member-${i}-dept`).value;
         
         if (memberStudentId && memberDept) {
-            const memberStudent = getStudentById(memberStudentId);
             validations.push(
-                validateStudentAccessCode(memberStudent?.name, memberAccessCode, memberDept, `Member ${i}`)
+                validateStudentAccessCode(memberStudentId, memberAccessCode, memberDept, `Member ${i}`)
             );
         }
     }
@@ -146,21 +145,34 @@ async function validateAllAccessCodes() {
     return { success: true };
 }
 
+
 // Validate Single Student Access Code
-async function validateStudentAccessCode(studentName, accessCode, department, position) {
+// CORRECTED: Properly extracts student name before validation
+async function validateStudentAccessCode(studentId, accessCode, department, position) {
     if (!accessCode || accessCode.trim() === '') {
         return {
             success: false,
-            message: `Access code required for ${position}: ${studentName}`
+            message: `Access code required for ${position}`
         };
     }
+    
+    // FIX: Get the actual student name from the studentId
+    const student = getStudentById(studentId);
+    if (!student || !student.name) {
+        return {
+            success: false,
+            message: `Invalid student selection for ${position}`
+        };
+    }
+    
+    const studentName = student.name;
     
     try {
         const response = await fetch(`${API_BASE_URL}/api/auth/student`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                studentName: studentName,
+                studentName: studentName, // Send actual name, not ID
                 accessCode: parseInt(accessCode),
                 department: department
             })
@@ -183,6 +195,7 @@ async function validateStudentAccessCode(studentName, accessCode, department, po
         };
     }
 }
+
 
 // Update loading progress
 function updateLoadingProgress(percentage, message) {
@@ -2261,6 +2274,7 @@ function populateDepartmentDropdowns() {
 }
 
 // Fixed function to show only names in dropdown
+// CORRECTED: Shows only names, not passwords
 async function populateStudentByDepartment(department, selectId) {
     const selectElement = document.getElementById(selectId);
     if (!selectElement || !department) return;
@@ -2278,8 +2292,8 @@ async function populateStudentByDepartment(department, selectId) {
             if (!registeredStudents.has(studentId)) {
                 const option = document.createElement('option');
                 option.value = studentId;
-                // Show only the name (first element of the array) - THIS FIXES THE PASSWORD VISIBILITY ISSUE
-                option.textContent = Array.isArray(studentArray) ? studentArray[0] : studentArray;
+                // FIX: Extract only the name (first element) from the array
+                option.textContent = studentArray[0]; // Only show name, not password
                 selectElement.appendChild(option);
             }
         });
@@ -2287,6 +2301,7 @@ async function populateStudentByDepartment(department, selectId) {
     
     selectElement.disabled = !department;
 }
+
 
 
 function populateAdminMentorDropdown() {
