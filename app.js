@@ -147,8 +147,7 @@ async function validateAllAccessCodes() {
 
 
 // Validate Single Student Access Code
-// CORRECTED: Properly extracts student name before validation
-// CORRECTED: Properly extracts student name before validation
+// CORRECTED: Secure validation without exposing passwords
 async function validateStudentAccessCode(studentId, accessCode, department, position) {
     if (!accessCode || accessCode.trim() === '') {
         return {
@@ -157,7 +156,7 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
     
-    // 🔥 FIX: Get the actual student name from the studentId
+    // Get the actual student name from the studentId
     const student = getStudentById(studentId);
     if (!student || !student.name) {
         return {
@@ -166,28 +165,27 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
     
-    const studentName = student.name;
-    
     try {
-        console.log('Validating:', { studentName, accessCode, department }); // Debug log
+        // 🔥 FIX: Don't log sensitive information
+        console.log(`Validating ${position}: ${student.name} from ${department}`);
         
         const response = await fetch(`${API_BASE_URL}/api/auth/student`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                studentName: studentName, // Send actual name, not ID
+                studentName: student.name,
                 accessCode: parseInt(accessCode),
                 department: department
             })
         });
         
         const result = await response.json();
-        console.log('Validation result:', result); // Debug log
+        console.log(`Validation result for ${position}:`, result.success ? 'SUCCESS' : 'FAILED');
         
         if (!result.success) {
             return {
                 success: false,
-                message: `Invalid access code for ${position}: ${studentName}`
+                message: `Invalid access code for ${position}` // 🔥 FIX: Don't include student name or code
             };
         }
         
@@ -196,10 +194,11 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         console.error('Validation error:', error);
         return {
             success: false,
-            message: `Validation error for ${position}: ${studentName}`
+            message: `Validation failed for ${position}. Please try again.` // 🔥 FIX: Generic error message
         };
     }
 }
+
 
 
 
@@ -1323,13 +1322,17 @@ async function saveTeam(team) {
     }
 }
 
+// 🔥 FIX: Secure error display
 function showError(elementId, message) {
     const errorElement = document.getElementById(elementId);
     if (errorElement) {
+        // Don't include access codes or sensitive data in error messages
         errorElement.textContent = message;
         errorElement.style.display = 'block';
+        errorElement.classList.remove('hidden');
     }
 }
+
 
 function showIdeaSimilarityWarning(similarArray, teamData, onSubmitAnyway) {
     let msg = "⚠ One or more of your project ideas is similar to an already registered idea:\n";
@@ -2210,13 +2213,17 @@ async function rejectTeam(teamId) {
 }
 
 
+// 🔥 FIX: Secure error display
 function showError(elementId, message) {
     const errorElement = document.getElementById(elementId);
     if (errorElement) {
+        // Don't include access codes or sensitive data in error messages
         errorElement.textContent = message;
+        errorElement.style.display = 'block';
         errorElement.classList.remove('hidden');
     }
 }
+
 
 function hideError(elementId) {
     const errorElement = document.getElementById(elementId);
