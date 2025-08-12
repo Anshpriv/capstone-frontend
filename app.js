@@ -146,7 +146,6 @@ async function validateAllAccessCodes() {
 }
 
 
-// CORRECTED: Properly extract and send student data
 async function validateStudentAccessCode(studentId, accessCode, department, position) {
     if (!accessCode || accessCode.trim() === '') {
         return {
@@ -155,7 +154,7 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
     
-    // 🔥 FIX: Properly extract student name from ID
+    // Get the actual student name from the studentId
     const student = getStudentById(studentId);
     if (!student || !student.name) {
         return {
@@ -164,8 +163,22 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
     
-    // 🔥 FIX: Clean and prepare data for transmission
-    const cleanStudentName = student.name.trim();
+    // 🔥 FIX: Add safety check to ensure name is a string
+    let studentName = student.name;
+    if (Array.isArray(studentName)) {
+        studentName = studentName[0]; // Extract first element if it's still an array
+    }
+    
+    if (typeof studentName !== 'string') {
+        console.error('Student name is not a string:', studentName, typeof studentName);
+        return {
+            success: false,
+            message: `Invalid student data for ${position}`
+        };
+    }
+    
+    // Clean and prepare data for transmission
+    const cleanStudentName = studentName.trim();
     const cleanAccessCode = accessCode.toString().trim();
     const cleanDepartment = department.trim();
     
@@ -180,9 +193,9 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                studentName: cleanStudentName,  // Send clean name
-                accessCode: parseInt(cleanAccessCode), // Send as integer
-                department: cleanDepartment     // Send clean department
+                studentName: cleanStudentName,
+                accessCode: parseInt(cleanAccessCode),
+                department: cleanDepartment
             })
         });
         
@@ -205,6 +218,7 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
 }
+
 
 
 
@@ -478,13 +492,14 @@ function getStudentById(id) {
         
         return {
             id: id,
-            // 🔥 FIX: Extract name from 2D array [name, accessCode]
+            // 🔥 FIX: Ensure we extract the NAME (string) from the array, not the array itself
             name: Array.isArray(studentData) ? studentData[0] : studentData,
             department: dept
         };
     }
     return null;
 }
+
 
 
 async function debugViewTeams() {
