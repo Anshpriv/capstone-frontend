@@ -492,13 +492,27 @@ function getStudentById(id) {
         
         return {
             id: id,
-            // 🔥 FIX: Ensure we extract the NAME (string) from the array, not the array itself
+            // 🔥 FIX: Always extract name (first element) from 2D array, never show access code
             name: Array.isArray(studentData) ? studentData[0] : studentData,
             department: dept
         };
     }
     return null;
 }
+// Helper function to safely get student name without exposing access codes
+function getStudentNameById(studentId) {
+    const student = getStudentById(studentId);
+    if (!student) return 'Unknown Student';
+    
+    // Extra safety: ensure we never display access codes
+    let name = student.name;
+    if (Array.isArray(name)) {
+        name = name[0]; // Extract first element if still an array
+    }
+    
+    return typeof name === 'string' ? name : 'Unknown Student';
+}
+
 
 
 
@@ -966,8 +980,8 @@ function displayMentorEditTeams(teams) {
     let html = '<div class="mentor-edit-teams-container">';
     
     teams.forEach(team => {
-        const leader = getStudentById(team.leader);
-        const leaderName = leader ? leader.name : 'Unknown';
+        // 🔥 FIX: Get leader name without access code
+        const leaderName = getStudentNameById(team.leader);
         const memberCount = team.members ? team.members.length : 0;
         const projectIdeas = team.project_ideas || [];
         
@@ -1006,6 +1020,7 @@ function displayMentorEditTeams(teams) {
     html += '</div>';
     container.innerHTML = html;
 }
+
 
 
 
@@ -1157,11 +1172,8 @@ function displayFinalList(teams) {
     `;
     
     teams.forEach(team => {
-        // Get member names
-        const memberNames = team.members.map(memberId => {
-            const student = getStudentById(memberId);
-            return student ? student.name : 'Unknown';
-        });
+        // 🔥 FIX: Get member names properly without access codes
+        const memberNames = team.members.map(memberId => getStudentNameById(memberId));
         
         // Get mentor preferences
         const mentorPreferences = team.mentor_preferences || [];
@@ -1198,6 +1210,7 @@ function displayFinalList(teams) {
     
     container.innerHTML = html;
 }
+
 
 function exportFinalListToCSV() {
     if (!isFinalListHODLoggedIn) return;
@@ -2571,37 +2584,43 @@ function logout() {
 
 
 async function displayTeamsManagement() {
-    const teams = await getTeams();
-    const container = document.getElementById('teams-management-list');
-    if (!container) return;
-    
-    // Filter out accepted teams from Team Management section
-    const manageableTeams = teams.filter(team => 
-        team.mentor_status !== 'accepted' || !team.final_mentor
-    );
-    
-    if (manageableTeams.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No teams available for management. All teams have been assigned to mentors.</p></div>';
-        return;
-    }
-    
-    container.innerHTML = manageableTeams.map(team => `
-        <div class="team-management-card">
-            <div class="team-header">
-                <h4>${team.name}</h4>
-                <button onclick="deleteTeam('${team.team_id}')" class="btn btn--danger btn--sm">
+    try {
+        console.log('Fetching teams for management...');
+        const teams = await getTeams();
+        
+        const teamsContainer = document.getElementById('teams-management-list');
+        if (!teamsContainer) {
+            console.error('Teams management container not found');
+            return;
+        }
+        
+        if (!teams || teams.length === 0) {
+            teamsContainer.innerHTML = '<p class="no-teams">No teams registered yet.</p>';
+            return;
+        }
+        
+        // Display teams with delete buttons - FIXED to show only names
+        teamsContainer.innerHTML = teams.map(team => `
+            <div class="team-management-card">
+                <h3>${team.name}</h3>
+                <p><strong>Team ID:</strong> ${team.team_id}</p>
+                <p><strong>Leader:</strong> ${getStudentNameById(team.leader)}</p>
+                <p><strong>Members:</strong> ${team.members.length}</p>
+                <button class="btn btn--danger" onclick="deleteTeam('${team.team_id}')">
                     Delete Team
                 </button>
             </div>
-            <div class="team-summary">
-                <p><strong>Leader:</strong> ${getStudentById(team.leader)?.name}</p>
-                <p><strong>Members:</strong> ${team.members.length}</p>
-                <p><strong>Registered:</strong> ${new Date(team.registration_date).toLocaleDateString()}</p>
-                <p><strong>Status:</strong> ${getTeamStatusText(team)}</p>
-            </div>
-        </div>
-    `).join('');
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error displaying teams management:', error);
+        const teamsContainer = document.getElementById('teams-management-list');
+        if (teamsContainer) {
+            teamsContainer.innerHTML = '<p class="error">Error loading teams. Please try again.</p>';
+        }
+    }
 }
+
 function getTeamStatusText(team) {
     if (team.mentor_status === 'pending') {
         const currentMentorIndex = team.current_mentor_index || 0;
@@ -3194,3 +3213,4 @@ window.backToDashboardWithLogout = backToDashboardWithLogout;
 window.toggleAccessCodeInput = toggleAccessCodeInput;
 window.validateAllAccessCodes = validateAllAccessCodes;
 window.validateStudentAccessCode = validateStudentAccessCode;
+window.getStudentNameById = getStudentNameById;
