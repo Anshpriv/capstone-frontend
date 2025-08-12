@@ -148,6 +148,7 @@ async function validateAllAccessCodes() {
 
 // Validate Single Student Access Code
 // CORRECTED: Properly extracts student name before validation
+// CORRECTED: Properly extracts student name before validation
 async function validateStudentAccessCode(studentId, accessCode, department, position) {
     if (!accessCode || accessCode.trim() === '') {
         return {
@@ -156,7 +157,7 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
     
-    // FIX: Get the actual student name from the studentId
+    // 🔥 FIX: Get the actual student name from the studentId
     const student = getStudentById(studentId);
     if (!student || !student.name) {
         return {
@@ -168,6 +169,8 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
     const studentName = student.name;
     
     try {
+        console.log('Validating:', { studentName, accessCode, department }); // Debug log
+        
         const response = await fetch(`${API_BASE_URL}/api/auth/student`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -179,6 +182,7 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         });
         
         const result = await response.json();
+        console.log('Validation result:', result); // Debug log
         
         if (!result.success) {
             return {
@@ -189,12 +193,14 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         
         return { success: true };
     } catch (error) {
+        console.error('Validation error:', error);
         return {
             success: false,
             message: `Validation error for ${position}: ${studentName}`
         };
     }
 }
+
 
 
 // Update loading progress
@@ -455,21 +461,23 @@ async function displayTeamsManagement() {
         }
     }
 }
-function getStudentNameById(studentId) {
-    if (!studentId) return 'Unknown';
+function getStudentById(id) {
+    if (!id) return null;
     
-    const parts = studentId.split('_');
-    if (parts.length !== 2) return studentId;
-    
-    const [department, index] = parts;
-    const departmentStudents = appData.students[department];
-    
-    if (departmentStudents && departmentStudents[parseInt(index)]) {
-        return departmentStudents[parseInt(index)];
+    const [dept, index] = id.split('_');
+    if (appData.students[dept] && appData.students[dept][parseInt(index)]) {
+        const studentData = appData.students[dept][parseInt(index)];
+        
+        return {
+            id: id,
+            // 🔥 FIX: Extract name from 2D array [name, accessCode]
+            name: Array.isArray(studentData) ? studentData[0] : studentData,
+            department: dept
+        };
     }
-    
-    return studentId;
+    return null;
 }
+
 async function debugViewTeams() {
     console.log('=== DEBUG: View Teams Issue ===');
     
@@ -2275,6 +2283,7 @@ function populateDepartmentDropdowns() {
 
 // Fixed function to show only names in dropdown
 // CORRECTED: Shows only names, not passwords
+// CORRECTED: Shows only names, not passwords
 async function populateStudentByDepartment(department, selectId) {
     const selectElement = document.getElementById(selectId);
     if (!selectElement || !department) return;
@@ -2292,8 +2301,8 @@ async function populateStudentByDepartment(department, selectId) {
             if (!registeredStudents.has(studentId)) {
                 const option = document.createElement('option');
                 option.value = studentId;
-                // FIX: Extract only the name (first element) from the array
-                option.textContent = studentArray[0]; // Only show name, not password
+                // 🔥 FIX: Extract only the name (first element) from the array
+                option.textContent = Array.isArray(studentArray) ? studentArray[0] : studentArray;
                 selectElement.appendChild(option);
             }
         });
@@ -2301,6 +2310,7 @@ async function populateStudentByDepartment(department, selectId) {
     
     selectElement.disabled = !department;
 }
+
 
 
 
@@ -2919,32 +2929,35 @@ async function initializeAppComponents() {
     setupCharacterCounters();
     
     // Team Leader Department Event Listener - FIXED
-    const leaderDeptDropdown = document.getElementById('leader-department');
-    if (leaderDeptDropdown) {
-        leaderDeptDropdown.addEventListener('change', async function() {
-            const department = this.value;
-            const studentSelect = document.getElementById('team-leader');
+    // Team Leader Department Event Listener - FIXED
+const leaderDeptDropdown = document.getElementById('leader-department');
+if (leaderDeptDropdown) {
+    leaderDeptDropdown.addEventListener('change', async function() {
+        const department = this.value;
+        const studentSelect = document.getElementById('team-leader');
+        
+        studentSelect.innerHTML = '<option value="">Select Student</option>';
+        
+        if (department && appData.students[department]) {
+            // Get already registered students to exclude them
+            const registeredStudents = await getRegisteredStudents();
             
-            studentSelect.innerHTML = '<option value="">Select Student</option>';
-            
-            if (department && appData.students[department]) {
-                // Get already registered students to exclude them
-                const registeredStudents = await getRegisteredStudents();
+            appData.students[department].forEach((studentArray, index) => {
+                const studentId = `${department}_${index}`;
                 
-                appData.students[department].forEach((student, index) => {
-                    const studentId = `${department}_${index}`;
-                    
-                    // Only add if student is not already registered
-                    if (!registeredStudents.has(studentId)) {
-                        const option = document.createElement('option');
-                        option.value = studentId; // Use proper ID format
-                        option.textContent = student;
-                        studentSelect.appendChild(option);
-                    }
-                });
-            }
-        });
-    }
+                // Only add if student is not already registered
+                if (!registeredStudents.has(studentId)) {
+                    const option = document.createElement('option');
+                    option.value = studentId;
+                    // 🔥 FIX: Show only the name (first element)
+                    option.textContent = Array.isArray(studentArray) ? studentArray[0] : studentArray;
+                    selectElement.appendChild(option);
+                }
+            });
+        }
+    });
+}
+
     
     // NEW: Access Code Toggle Event Listeners
     const studentDropdowns = [
