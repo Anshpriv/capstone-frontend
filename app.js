@@ -572,14 +572,39 @@ async function handleTeamDetailsForm(event) {
         return false;
     }
     
-    // Your existing code continues...
+    // Rest of your existing code...
     const teamName = document.getElementById('team-name').value.trim();
     const leaderDepartment = document.getElementById('leader-department').value;
-    // ... rest of your existing code remains the same ...
+    const teamLeader = document.getElementById('team-leader').value;
+    const member2 = document.getElementById('member-2').value;
+    const member3 = document.getElementById('member-3').value;
+    const member4 = document.getElementById('member-4').value;
+
+    if (!teamName) {
+        showError('team-error', 'Please enter a team name.');
+        return false;
+    }
+
+    if (!leaderDepartment || !teamLeader) {
+        showError('team-error', 'Please select team leader department and student.');
+        return false;
+    }
+
+    const selectedMembers = [teamLeader, member2, member3, member4].filter(member => member);
     
+    currentTeam = {
+        team_id: 'TEAM_' + Date.now(),
+        name: teamName,
+        leader: teamLeader,
+        members: selectedMembers,
+        registration_date: new Date().toISOString()
+    };
+
+    console.log('Current team created:', currentTeam);
     showPage('mentor-selection');
     return false;
 }
+
 
 async function handleTeamEditForm(event) {
     event.preventDefault();
@@ -2235,27 +2260,34 @@ function populateDepartmentDropdowns() {
     });
 }
 
-async function populateStudentByDepartment(department, targetDropdownId) {
-    const registered = await getRegisteredStudents();
-    const dropdown = document.getElementById(targetDropdownId);
-    if (!dropdown) return;
+// Fixed function to show only names in dropdown
+async function populateStudentByDepartment(department, selectId) {
+    const selectElement = document.getElementById(selectId);
+    if (!selectElement || !department) return;
     
-    dropdown.innerHTML = '<option value="">Select Student</option>';
+    selectElement.innerHTML = '<option value="">Select Student</option>';
     
-    if (department && appData.students[department]) {
-        appData.students[department].forEach((name, index) => {
+    if (appData.students && appData.students[department]) {
+        // Get already registered students to exclude them
+        const registeredStudents = await getRegisteredStudents();
+        
+        appData.students[department].forEach((studentArray, index) => {
             const studentId = `${department}_${index}`;
-            if (!registered.has(studentId)) {
+            
+            // Only add if student is not already registered
+            if (!registeredStudents.has(studentId)) {
                 const option = document.createElement('option');
                 option.value = studentId;
-                option.textContent = name;
-                dropdown.appendChild(option);
+                // Show only the name (first element of the array) - THIS FIXES THE PASSWORD VISIBILITY ISSUE
+                option.textContent = Array.isArray(studentArray) ? studentArray[0] : studentArray;
+                selectElement.appendChild(option);
             }
         });
     }
     
-    dropdown.disabled = !department;
+    selectElement.disabled = !department;
 }
+
 
 function populateAdminMentorDropdown() {
     const dropdown = document.getElementById('mentor-selector');
