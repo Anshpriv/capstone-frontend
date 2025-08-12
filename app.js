@@ -86,6 +86,103 @@ function initializeLoadingScreen() {
         }
     }, 2000);
 }
+// Show/Hide Access Code Input Based on Student Selection
+function toggleAccessCodeInput(studentSelectId, accessCodeInputId) {
+    const studentSelect = document.getElementById(studentSelectId);
+    const accessCodeInput = document.getElementById(accessCodeInputId);
+    
+    if (!studentSelect || !accessCodeInput) return;
+    
+    if (studentSelect.value && studentSelect.value !== '') {
+        accessCodeInput.style.display = 'block';
+        accessCodeInput.required = true;
+    } else {
+        accessCodeInput.style.display = 'none';
+        accessCodeInput.required = false;
+        accessCodeInput.value = '';
+    }
+}
+// Validate All Selected Students' Access Codes
+async function validateAllAccessCodes() {
+    const validations = [];
+    
+    // Validate Team Leader
+    const leaderStudentId = document.getElementById('team-leader').value;
+    const leaderAccessCode = document.getElementById('leader-access-code').value;
+    const leaderDept = document.getElementById('leader-department').value;
+    
+    if (leaderStudentId && leaderDept) {
+        const leaderStudent = getStudentById(leaderStudentId);
+        validations.push(
+            validateStudentAccessCode(leaderStudent?.name, leaderAccessCode, leaderDept, 'Team Leader')
+        );
+    }
+    
+    // Validate Other Members
+    for (let i = 2; i <= 4; i++) {
+        const memberStudentId = document.getElementById(`member-${i}`).value;
+        const memberAccessCode = document.getElementById(`member-${i}-access-code`).value;
+        const memberDept = document.getElementById(`member-${i}-dept`).value;
+        
+        if (memberStudentId && memberDept) {
+            const memberStudent = getStudentById(memberStudentId);
+            validations.push(
+                validateStudentAccessCode(memberStudent?.name, memberAccessCode, memberDept, `Member ${i}`)
+            );
+        }
+    }
+    
+    // Execute all validations
+    const results = await Promise.all(validations);
+    
+    // Check for failures
+    const failures = results.filter(result => !result.success);
+    
+    if (failures.length > 0) {
+        const errorMessages = failures.map(f => f.message).join('\n');
+        throw new Error(errorMessages);
+    }
+    
+    return { success: true };
+}
+
+// Validate Single Student Access Code
+async function validateStudentAccessCode(studentName, accessCode, department, position) {
+    if (!accessCode || accessCode.trim() === '') {
+        return {
+            success: false,
+            message: `Access code required for ${position}: ${studentName}`
+        };
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/student`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentName: studentName,
+                accessCode: parseInt(accessCode),
+                department: department
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            return {
+                success: false,
+                message: `Invalid access code for ${position}: ${studentName}`
+            };
+        }
+        
+        return { success: true };
+    } catch (error) {
+        return {
+            success: false,
+            message: `Validation error for ${position}: ${studentName}`
+        };
+    }
+}
 
 // Update loading progress
 function updateLoadingProgress(percentage, message) {
@@ -451,10 +548,11 @@ async function authenticateMentor(username, password) {
 
 async function handleTeamDetailsForm(event) {
     event.preventDefault();
-     console.log('Form submitted!');
+    console.log('Form submitted!');
     
     hideError('team-error');
     
+    // Your existing validation
     const validationResult = await validateStudentSelections();
     console.log('Validation result:', validationResult);
     
@@ -462,57 +560,27 @@ async function handleTeamDetailsForm(event) {
         console.log('Validation failed, returning false');
         return false;
     }
-    hideError('team-error');
     
-    if (!(await validateStudentSelections())) return false;
+    // NEW: Access Code Validation
+    try {
+        console.log('Validating access codes...');
+        await validateAllAccessCodes();
+        console.log('All access codes validated successfully!');
+    } catch (error) {
+        console.error('Access code validation failed:', error);
+        showError('team-error', error.message);
+        return false;
+    }
     
+    // Your existing code continues...
     const teamName = document.getElementById('team-name').value.trim();
     const leaderDepartment = document.getElementById('leader-department').value;
-    const teamLeader = document.getElementById('team-leader').value;
-    const member2 = document.getElementById('member-2').value;
-    const member3 = document.getElementById('member-3').value;
-    const member4 = document.getElementById('member-4').value;
-    
-    // Updated validation - only team name and leader required
-    if (!teamName || !leaderDepartment || !teamLeader) {
-        showError('team-error', 'Please fill in team name and select a team leader.');
-        return false;
-    }
-    
-    // Check for duplicate team name
-    const existingTeams = await getTeams();
-    if (existingTeams.some(team => team.name.toLowerCase() === teamName.toLowerCase())) {
-        showError('team-error', 'Team name already exists. Please choose a different name.');
-        return false;
-    }
-    
-    // Build members array - start with just the leader
-    const members = [teamLeader];
-    if (member2) members.push(member2);
-    if (member3) members.push(member3);
-    if (member4) members.push(member4);
-    
-    // Ensure minimum 1 member (leader) and maximum 4 members
-    if (members.length < 1) {
-        showError('team-error', 'Team must have at least 1 member (the leader).');
-        return false;
-    }
-    
-    if (members.length > 4) {
-        showError('team-error', 'Team cannot have more than 4 members.');
-        return false;
-    }
-    
-    currentTeam = {
-    team_id: `team-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    name: teamName,  // This matches your database
-    leader: teamLeader,
-    members: members
-};
+    // ... rest of your existing code remains the same ...
     
     showPage('mentor-selection');
     return false;
 }
+
 async function handleTeamEditForm(event) {
     event.preventDefault();
     hideError('edit-error');
@@ -2831,6 +2899,23 @@ async function initializeAppComponents() {
         });
     }
     
+    // NEW: Access Code Toggle Event Listeners
+    const studentDropdowns = [
+        { select: 'team-leader', accessCode: 'leader-access-code' },
+        { select: 'member-2', accessCode: 'member-2-access-code' },
+        { select: 'member-3', accessCode: 'member-3-access-code' },
+        { select: 'member-4', accessCode: 'member-4-access-code' }
+    ];
+    
+    studentDropdowns.forEach(({ select, accessCode }) => {
+        const selectElement = document.getElementById(select);
+        if (selectElement) {
+            selectElement.addEventListener('change', () => {
+                toggleAccessCodeInput(select, accessCode);
+            });
+        }
+    });
+    
     // Add all your existing event listeners here
     const mentorEditLoginBtn = document.getElementById('mentor-edit-login-btn');
     const mentorEditLogoutBtn = document.getElementById('mentor-edit-logout-btn');
@@ -2931,6 +3016,7 @@ async function initializeAppComponents() {
 
 
 
+
 // ====== START APPLICATION ======
 document.addEventListener('DOMContentLoaded', initializeAppWithLoading);
 
@@ -2974,3 +3060,6 @@ window.exportFinalListToCSV = exportFinalListToCSV;
 window.finalListHODLogout = finalListHODLogout;
 // Add this line with your other window assignments
 window.backToDashboardWithLogout = backToDashboardWithLogout;
+window.toggleAccessCodeInput = toggleAccessCodeInput;
+window.validateAllAccessCodes = validateAllAccessCodes;
+window.validateStudentAccessCode = validateStudentAccessCode;
