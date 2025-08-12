@@ -502,6 +502,7 @@ function getStudentById(id) {
 
 
 
+
 async function debugViewTeams() {
     console.log('=== DEBUG: View Teams Issue ===');
     
@@ -2363,45 +2364,79 @@ function populateAdminMentorDropdown() {
 }
 
 // ====== VALIDATION FUNCTIONS ======
-async function validateStudentSelections() {
-    const selectedStudents = [];
-    const dropdowns = ['team-leader', 'member-2', 'member-3', 'member-4'];
+async function validateStudentAccessCode(studentId, accessCode, department, position) {
+    if (!accessCode || accessCode.trim() === '') {
+        return {
+            success: false,
+            message: `Access code required for ${position}`
+        };
+    }
     
-    dropdowns.forEach(dropdownId => {
-        const element = document.getElementById(dropdownId);
-        if (element && element.value) {
-            selectedStudents.push(element.value);
-        }
-    });
+    // Get the actual student name from the studentId
+    const student = getStudentById(studentId);
+    if (!student || !student.name) {
+        return {
+            success: false,
+            message: `Invalid student selection for ${position}`
+        };
+    }
     
-    // Check for duplicates only if there are multiple selections
-    if (selectedStudents.length > 1) {
-        const hasDuplicates = selectedStudents.length !== new Set(selectedStudents).size;
+    // 🔥 FIX: Add safety check to ensure name is a string
+    let studentName = student.name;
+    if (Array.isArray(studentName)) {
+        studentName = studentName[0]; // Extract first element if it's still an array
+    }
+    
+    if (typeof studentName !== 'string') {
+        console.error('Student name is not a string:', studentName, typeof studentName);
+        return {
+            success: false,
+            message: `Invalid student data for ${position}`
+        };
+    }
+    
+    // Clean and prepare data for transmission
+    const cleanStudentName = studentName.trim();
+    const cleanAccessCode = accessCode.toString().trim();
+    const cleanDepartment = department.trim();
+    
+    try {
+        console.log(`🔍 Validating ${position}:`, {
+            name: cleanStudentName,
+            code: cleanAccessCode,
+            department: cleanDepartment
+        });
         
-        if (hasDuplicates) {
-            showError('team-error', 'Each student can only be selected once. Please choose different students.');
-            return false;
+        const response = await fetch(`${API_BASE_URL}/api/auth/student`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentName: cleanStudentName,
+                accessCode: parseInt(cleanAccessCode),
+                department: cleanDepartment
+            })
+        });
+        
+        const result = await response.json();
+        console.log(`📋 ${position} validation result:`, result);
+        
+        if (!result.success) {
+            return {
+                success: false,
+                message: `Invalid access code for ${position}`
+            };
         }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Validation error:', error);
+        return {
+            success: false,
+            message: `Network error validating ${position}`
+        };
     }
-    
-    // Check if team leader is selected (minimum requirement)
-    if (selectedStudents.length === 0) {
-        showError('team-error', 'Please select at least a team leader.');
-        return false;
-    }
-    
-    // Check if any selected students are already registered
-    const registeredStudents = await getRegisteredStudents();
-    const alreadyRegistered = selectedStudents.filter(studentId => registeredStudents.has(studentId));
-    
-    if (alreadyRegistered.length > 0) {
-        const studentNames = alreadyRegistered.map(id => getStudentById(id)?.name).join(', ');
-        showError('team-error', `The following students are already registered in other teams: ${studentNames}`);
-        return false;
-    }
-    
-    return true;
 }
+
 
 
 function validateMentorSelections() {
