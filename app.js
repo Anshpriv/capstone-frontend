@@ -478,6 +478,8 @@ function getStudentById(id) {
     return null;
 }
 
+
+
 async function debugViewTeams() {
     console.log('=== DEBUG: View Teams Issue ===');
     
@@ -2284,6 +2286,7 @@ function populateDepartmentDropdowns() {
 // Fixed function to show only names in dropdown
 // CORRECTED: Shows only names, not passwords
 // CORRECTED: Shows only names, not passwords
+// CORRECTED: Shows only names, not passwords
 async function populateStudentByDepartment(department, selectId) {
     const selectElement = document.getElementById(selectId);
     if (!selectElement || !department) return;
@@ -2310,6 +2313,7 @@ async function populateStudentByDepartment(department, selectId) {
     
     selectElement.disabled = !department;
 }
+
 
 
 
@@ -2930,6 +2934,7 @@ async function initializeAppComponents() {
     
     // Team Leader Department Event Listener - FIXED
     // Team Leader Department Event Listener - FIXED
+// Team Leader Department Event Listener - FIXED
 const leaderDeptDropdown = document.getElementById('leader-department');
 if (leaderDeptDropdown) {
     leaderDeptDropdown.addEventListener('change', async function() {
@@ -2949,14 +2954,15 @@ if (leaderDeptDropdown) {
                 if (!registeredStudents.has(studentId)) {
                     const option = document.createElement('option');
                     option.value = studentId;
-                    // 🔥 FIX: Show only the name (first element)
+                    // 🔥 FIX: Show only the name (first element) and append to correct element
                     option.textContent = Array.isArray(studentArray) ? studentArray[0] : studentArray;
-                    selectElement.appendChild(option);
+                    studentSelect.appendChild(option); // ← FIXED: was selectElement, now studentSelect
                 }
             });
         }
     });
 }
+
 
     
     // NEW: Access Code Toggle Event Listeners
