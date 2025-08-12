@@ -146,8 +146,7 @@ async function validateAllAccessCodes() {
 }
 
 
-// Validate Single Student Access Code
-// CORRECTED: Secure validation without exposing passwords
+// CORRECTED: Properly extract and send student data
 async function validateStudentAccessCode(studentId, accessCode, department, position) {
     if (!accessCode || accessCode.trim() === '') {
         return {
@@ -156,7 +155,7 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
     
-    // Get the actual student name from the studentId
+    // 🔥 FIX: Properly extract student name from ID
     const student = getStudentById(studentId);
     if (!student || !student.name) {
         return {
@@ -165,36 +164,44 @@ async function validateStudentAccessCode(studentId, accessCode, department, posi
         };
     }
     
+    // 🔥 FIX: Clean and prepare data for transmission
+    const cleanStudentName = student.name.trim();
+    const cleanAccessCode = accessCode.toString().trim();
+    const cleanDepartment = department.trim();
+    
     try {
-        // 🔥 FIX: Don't log sensitive information
-        console.log(`Validating ${position}: ${student.name} from ${department}`);
+        console.log(`🔍 Validating ${position}:`, {
+            name: cleanStudentName,
+            code: cleanAccessCode,
+            department: cleanDepartment
+        });
         
         const response = await fetch(`${API_BASE_URL}/api/auth/student`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                studentName: student.name,
-                accessCode: parseInt(accessCode),
-                department: department
+                studentName: cleanStudentName,  // Send clean name
+                accessCode: parseInt(cleanAccessCode), // Send as integer
+                department: cleanDepartment     // Send clean department
             })
         });
         
         const result = await response.json();
-        console.log(`Validation result for ${position}:`, result.success ? 'SUCCESS' : 'FAILED');
+        console.log(`📋 ${position} validation result:`, result);
         
         if (!result.success) {
             return {
                 success: false,
-                message: `Invalid access code for ${position}` // 🔥 FIX: Don't include student name or code
+                message: `Invalid access code for ${position}`
             };
         }
         
         return { success: true };
     } catch (error) {
-        console.error('Validation error:', error);
+        console.error('❌ Validation error:', error);
         return {
             success: false,
-            message: `Validation failed for ${position}. Please try again.` // 🔥 FIX: Generic error message
+            message: `Network error validating ${position}`
         };
     }
 }
@@ -460,6 +467,8 @@ async function displayTeamsManagement() {
         }
     }
 }
+
+
 function getStudentById(id) {
     if (!id) return null;
     
@@ -476,7 +485,6 @@ function getStudentById(id) {
     }
     return null;
 }
-
 
 
 async function debugViewTeams() {
