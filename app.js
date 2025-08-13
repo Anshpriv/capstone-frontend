@@ -459,7 +459,7 @@ async function displayTeamsManagement() {
             return;
         }
         
-        // Display teams with delete buttons - FIXED to show status
+        // ✅ FIXED: Added the missing status line
         teamsContainer.innerHTML = teams.map(team => `
             <div class="team-management-card">
                 <h3>${team.name}</h3>
@@ -474,6 +474,8 @@ async function displayTeamsManagement() {
             </div>
         `).join('');
         
+        console.log('Teams management displayed successfully');
+        
     } catch (error) {
         console.error('Error displaying teams management:', error);
         const teamsContainer = document.getElementById('teams-management-list');
@@ -482,6 +484,7 @@ async function displayTeamsManagement() {
         }
     }
 }
+
 
 
 
