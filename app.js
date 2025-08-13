@@ -491,6 +491,7 @@ async function displayTeamsManagement() {
 
 
 
+
 function getStudentById(id) {
     if (!id) return null;
     
@@ -2712,9 +2713,13 @@ async function displayTeamsManagement() {
 }
 
 function getTeamStatusText(team) {
-    if (team.mentor_status === 'pending') {
+    if (team.mentor_status === 'accepted' && team.final_mentor) {
+        return `Accepted by ${team.final_mentor}`;
+    } else if (team.mentor_status === 'pending') {
         const currentMentorIndex = team.current_mentor_index || 0;
-        const currentMentor = appData.mentors[team.mentor_preferences[currentMentorIndex]] || 'Unknown';
+        const currentMentor = team.mentor_preferences && team.mentor_preferences[currentMentorIndex] 
+            ? appData.mentors[team.mentor_preferences[currentMentorIndex]] || 'Unknown Mentor'
+            : 'Unknown Mentor';
         return `Pending with ${currentMentor}`;
     } else if (team.mentor_status === 'rejected') {
         return 'Rejected by all mentors';
@@ -2722,6 +2727,7 @@ function getTeamStatusText(team) {
         return 'Waiting for mentor response';
     }
 }
+
 
 
 function getDepartmentDistribution(memberIds) {
