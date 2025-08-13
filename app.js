@@ -2672,44 +2672,6 @@ function logout() {
 // ====== DISPLAY FUNCTIONS ======
 
 
-async function displayTeamsManagement() {
-    try {
-        console.log('Fetching teams for management...');
-        const teams = await getTeams();
-        
-        const teamsContainer = document.getElementById('teams-management-list');
-        if (!teamsContainer) {
-            console.error('Teams management container not found');
-            return;
-        }
-        
-        if (!teams || teams.length === 0) {
-            teamsContainer.innerHTML = '<p class="no-teams">No teams registered yet.</p>';
-            return;
-        }
-        
-        // Display teams with delete buttons - FIXED to show only names
-        teamsContainer.innerHTML = teams.map(team => `
-            <div class="team-management-card">
-                <h3>${team.name}</h3>
-                <p><strong>Team ID:</strong> ${team.team_id}</p>
-                <p><strong>Leader:</strong> ${getStudentNameById(team.leader)}</p>
-                <p><strong>Members:</strong> ${team.members.length}</p>
-                <button class="btn btn--danger" onclick="deleteTeam('${team.team_id}')">
-                    Delete Team
-                </button>
-            </div>
-        `).join('');
-        
-    } catch (error) {
-        console.error('Error displaying teams management:', error);
-        const teamsContainer = document.getElementById('teams-management-list');
-        if (teamsContainer) {
-            teamsContainer.innerHTML = '<p class="error">Error loading teams. Please try again.</p>';
-        }
-    }
-}
-
 function getTeamStatusText(team) {
     console.log('=== DEBUG STATUS ===');
     console.log('Team:', team.name);
