@@ -460,16 +460,22 @@ async function displayTeamsManagement() {
             return;
         }
         
-        // Display teams with delete buttons
+        // Display teams with delete buttons and status - FIXED to show status and proper positioning
         teamsContainer.innerHTML = teams.map(team => `
             <div class="team-management-card">
-                <h3>${team.name}</h3>
-                <p><strong>Team ID:</strong> ${team.team_id}</p>
-                <p><strong>Leader:</strong> ${getStudentNameById(team.leader)}</p>
-                <p><strong>Members:</strong> ${team.members.length}</p>
-                <button class="btn btn--danger" onclick="deleteTeam('${team.team_id}')">
-                    Delete Team
-                </button>
+                <div class="team-card-header">
+                    <h3>${team.name}</h3>
+                    <button class="btn btn--danger delete-btn" onclick="deleteTeam('${team.team_id}')">
+                        Delete Team
+                    </button>
+                </div>
+                <div class="team-card-body">
+                    <p><strong>Team ID:</strong> ${team.team_id}</p>
+                    <p><strong>Leader:</strong> ${getStudentNameById(team.leader)}</p>
+                    <p><strong>Members:</strong> ${team.members.length}</p>
+                    <p><strong>Status:</strong> ${getTeamStatusText(team)}</p>
+                    <p><strong>Registered:</strong> ${new Date(team.registration_date).toLocaleDateString()}</p>
+                </div>
             </div>
         `).join('');
         
@@ -482,6 +488,7 @@ async function displayTeamsManagement() {
         }
     }
 }
+
 
 
 function getStudentById(id) {
