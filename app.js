@@ -2713,6 +2713,8 @@ async function displayTeamsManagement() {
 }
 
 function getTeamStatusText(team) {
+    console.log('Getting status for team:', team); // ADD THIS LINE
+    
     if (team.mentor_status === 'accepted' && team.final_mentor) {
         return `Accepted by ${team.final_mentor}`;
     } else if (team.mentor_status === 'pending') {
@@ -2727,6 +2729,7 @@ function getTeamStatusText(team) {
         return 'Waiting for mentor response';
     }
 }
+
 
 
 
