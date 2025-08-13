@@ -605,6 +605,87 @@ async function authenticateMentor(username, password) {
         return { success: false };
     }
 }
+function validateStudentSelections() {
+    const selectedStudents = new Set();
+    const errors = [];
+    
+    // Get team leader
+    const teamLeader = document.getElementById('team-leader').value;
+    if (teamLeader) {
+        selectedStudents.add(teamLeader);
+    }
+    
+    // Check all team members
+    const memberIds = ['member-2', 'member-3', 'member-4'];
+    
+    for (const memberId of memberIds) {
+        const memberElement = document.getElementById(memberId);
+        if (memberElement && memberElement.value) {
+            const memberValue = memberElement.value;
+            
+            // Check for duplicate selection
+            if (selectedStudents.has(memberValue)) {
+                errors.push(`Student cannot be selected multiple times`);
+                break; // Stop checking once we find a duplicate
+            }
+            
+            selectedStudents.add(memberValue);
+        }
+    }
+    
+    // Validate access codes for selected members
+    const accessCodeValidation = validateAccessCodes();
+    if (!accessCodeValidation.valid) {
+        errors.push(...accessCodeValidation.errors);
+    }
+    
+    return {
+        valid: errors.length === 0,
+        errors: errors,
+        message: errors.length > 0 ? errors.join(', ') : 'Validation successful'
+    };
+}
+
+// Helper function to validate access codes
+function validateAccessCodes() {
+    const errors = [];
+    
+    // Check team leader access code
+    const teamLeader = document.getElementById('team-leader').value;
+    const leaderAccessCode = document.getElementById('leader-access-code').value;
+    
+    if (teamLeader && !leaderAccessCode) {
+        errors.push('Team leader access code is required');
+    }
+    
+    if (teamLeader && leaderAccessCode && (leaderAccessCode.length !== 4 || isNaN(leaderAccessCode))) {
+        errors.push('Team leader access code must be a 4-digit number');
+    }
+    
+    // Check member access codes
+    const memberIds = ['member-2', 'member-3', 'member-4'];
+    const memberNames = ['Member 2', 'Member 3', 'Member 4'];
+    
+    for (let i = 0; i < memberIds.length; i++) {
+        const memberElement = document.getElementById(memberIds[i]);
+        const accessCodeElement = document.getElementById(`${memberIds[i]}-access-code`);
+        
+        if (memberElement && memberElement.value) {
+            const accessCode = accessCodeElement ? accessCodeElement.value : '';
+            
+            if (!accessCode) {
+                errors.push(`${memberNames[i]} access code is required`);
+            } else if (accessCode.length !== 4 || isNaN(accessCode)) {
+                errors.push(`${memberNames[i]} access code must be a 4-digit number`);
+            }
+        }
+    }
+    
+    return {
+        valid: errors.length === 0,
+        errors: errors
+    };
+}
 
 async function handleTeamDetailsForm(event) {
     event.preventDefault();
