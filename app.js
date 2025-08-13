@@ -421,14 +421,14 @@ async function displayTeams() {
 <div class="team-info">
 <div class="team-detail">
 <h5>Team Leader</h5>
-<p>${getStudentById(team.leader)?.name} (${getStudentById(team.leader)?.department})</p>
+<p>${getStudentNameById(team.leader)} (${getStudentById(team.leader)?.department})</p>
 </div>
 <div class="team-detail">
 <h5>All Members</h5>
 <ul>
                         ${team.members.map(memberId => {
                             const student = getStudentById(memberId);
-                            return `<li>${student?.name} (${student?.department})</li>`;
+                            return `<li>${getStudentNameById(memberId)} (${student?.department})</li>`;
                         }).join('')}
 </ul>
 </div>
@@ -441,6 +441,7 @@ async function displayTeams() {
 </div>
     `).join('');
 }
+
 
 async function displayTeamsManagement() {
     try {
@@ -1730,8 +1731,7 @@ async function loadEditTeams() {
     }
     
     container.innerHTML = teams.map(team => {
-        const leader = getStudentById(team.leader);
-        const leaderName = leader ? leader.name : 'Unknown';
+        const leaderName = getStudentNameById(team.leader); // ✅ FIXED: Use secure function
         const memberCount = team.members ? team.members.length : 0;
         
         return `
@@ -1744,6 +1744,7 @@ async function loadEditTeams() {
         `;
     }).join('');
 }
+
 
 // Open edit modal
 async function openEditModal(teamId) {
@@ -2069,7 +2070,7 @@ function displayMentorTeams(mentorTeams, mentorIndex) {
                 <div class="accepted-team-card" onclick="openFinalizeIdeaModal('${team.team_id}')" style="cursor: pointer;">
                     <div class="accepted-team-info">
                         <h5 class="accepted-team-name">${team.name}</h5>
-                        <p class="accepted-team-leader">Leader: ${getStudentById(team.leader)?.name || team.leader}</p>
+                        <p class="accepted-team-leader">Leader: ${getStudentNameById(team.leader)}</p>
                     </div>
                     <div class="accepted-team-badge">
                         <span class="status-badge ${team.final_idea ? 'status-finalized' : 'status-accepted'}">${statusText}</span>
@@ -2112,8 +2113,8 @@ function displayMentorTeams(mentorTeams, mentorIndex) {
                     </div>
                     
                     <div class="team-details">
-                        <p><strong>Leader:</strong> ${getStudentById(team.leader)?.name || team.leader}</p>
-                        <p><strong>Members:</strong> ${team.members.map(member => getStudentById(member)?.name || member).join(', ')}</p>
+                        <p><strong>Leader:</strong> ${getStudentNameById(team.leader)}</p>
+                        <p><strong>Members:</strong> ${team.members.map(member => getStudentNameById(member)).join(', ')}</p>
                         <p><strong>Registered:</strong> ${new Date(team.registration_date).toLocaleDateString()}</p>
                     </div>
                     
@@ -2145,6 +2146,7 @@ function displayMentorTeams(mentorTeams, mentorIndex) {
     
     container.innerHTML = html;
 }
+
 
 // Finalize Idea Modal Functions
 async function openFinalizeIdeaModal(teamId) {
