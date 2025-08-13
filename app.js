@@ -1172,7 +1172,7 @@ async function deselectTeam(teamId) {
                 body: JSON.stringify({
                     mentor_status: 'rejected',
                     final_mentor: null,
-                    final_idea: nullw
+                    final_idea: null
                 })
             });
             
