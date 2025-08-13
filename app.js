@@ -2713,7 +2713,14 @@ async function displayTeamsManagement() {
 }
 
 function getTeamStatusText(team) {
-    console.log('Getting status for team:', team); // ADD THIS LINE
+    console.log('=== DEBUG STATUS ===');
+    console.log('Team:', team.name);
+    console.log('mentor_status:', team.mentor_status);
+    console.log('final_mentor:', team.final_mentor);
+    console.log('current_mentor_index:', team.current_mentor_index);
+    console.log('mentor_preferences:', team.mentor_preferences);
+    console.log('appData.mentors:', appData.mentors);
+    console.log('====================');
     
     if (team.mentor_status === 'accepted' && team.final_mentor) {
         return `Accepted by ${team.final_mentor}`;
@@ -2726,9 +2733,14 @@ function getTeamStatusText(team) {
     } else if (team.mentor_status === 'rejected') {
         return 'Rejected by all mentors';
     } else {
-        return 'Waiting for mentor response';
+        return `Status: ${team.mentor_status || 'No status'} - Debug: ${JSON.stringify({
+            status: team.mentor_status,
+            mentor: team.final_mentor,
+            prefs: team.mentor_preferences
+        })}`;
     }
 }
+
 
 
 
