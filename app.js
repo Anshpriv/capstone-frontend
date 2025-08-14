@@ -355,23 +355,31 @@ async function fetchMentors() {
 
 async function populateMentorDropdowns() {
     try {
-        const mentors = await fetchMentors(); // expects array of mentor objects
-
+        const mentorsResponse = await fetch(`${API_BASE_URL}/api/mentors`);
+        const mentorsData = await mentorsResponse.json();
+        
+        // Store the full mentor objects for proper indexing
+        appData.mentors = mentorsData.mentors.map(mentor => mentor.name);
+        
         const mentorSelects = document.querySelectorAll('select[id^="mentor-"], select[id^="edit-mentor-"]');
         mentorSelects.forEach(select => {
             select.innerHTML = '<option value="">Select Mentor</option>';
 
-            mentors.forEach((mentor, index) => {
+            // Use the correct indexing that matches the stored preferences
+            mentorsData.mentors.forEach((mentor, index) => {
                 const option = document.createElement('option');
-                option.value = index; // Or mentor.id if you prefer!
+                option.value = index;
                 option.textContent = mentor.name;
                 select.appendChild(option);
             });
         });
+        
+        console.log('Mentors populated:', appData.mentors); // Debug log
     } catch (error) {
         console.error('Error populating mentor dropdowns:', error);
     }
 }
+
 
 // Add showPage function if missing
 function showPage(pageId) {
