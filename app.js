@@ -2694,20 +2694,35 @@ function getTeamStatusText(team) {
         return `Accepted by ${team.final_mentor}`;
     } else if (team.mentor_status === 'pending') {
         const currentMentorIndex = team.current_mentor_index || 0;
-        const currentMentor = team.mentor_preferences && team.mentor_preferences[currentMentorIndex] 
-            ? appData.mentors[team.mentor_preferences[currentMentorIndex]] || 'Unknown Mentor'
-            : 'Unknown Mentor';
-        return `Pending with ${currentMentor}`;
+        
+        // FIX: Add bounds checking and proper error handling
+        if (team.mentor_preferences && 
+            currentMentorIndex < team.mentor_preferences.length &&
+            team.mentor_preferences[currentMentorIndex] !== undefined) {
+            
+            const mentorIndex = team.mentor_preferences[currentMentorIndex];
+            const currentMentor = appData.mentors[mentorIndex];
+            
+            if (currentMentor) {
+                return `Pending with ${currentMentor}`;
+            } else {
+                console.error(`Mentor not found at index ${mentorIndex}`, {
+                    mentorIndex,
+                    availableMentors: appData.mentors,
+                    teamName: team.name
+                });
+                return `Pending with Unknown Mentor (Index: ${mentorIndex})`;
+            }
+        } else {
+            return 'Pending - Invalid mentor preference';
+        }
     } else if (team.mentor_status === 'rejected') {
         return 'Rejected by all mentors';
     } else {
-        return `Status: ${team.mentor_status || 'No status'} - Debug: ${JSON.stringify({
-            status: team.mentor_status,
-            mentor: team.final_mentor,
-            prefs: team.mentor_preferences
-        })}`;
+        return `Status: ${team.mentor_status || 'No status'}`;
     }
 }
+
 
 
 
