@@ -1288,56 +1288,82 @@ function displayFinalList(teams) {
     container.innerHTML = html;
 }
 
-function exportFinalListToCSV() {
-    if (!isFinalListHODLoggedIn) return;
-
-    getTeams().then(teams => {
+async function exportFinalListToCSV() {
+    if (!isFinalListHODLoggedIn) {
+        alert('Please login first.');
+        return;
+    }
+ 
+    try {
+        const teams = await getTeams();
         const finalizedTeams = teams.filter(team =>
             team.mentor_status === 'accepted' &&
             team.final_mentor &&
             team.final_idea
         );
-
+ 
         if (finalizedTeams.length === 0) {
             alert('No finalized teams to export.');
             return;
         }
-
+ 
+        // CSV Header
         let csvContent = 'Team Name,Team Leader,Team Members,Final Mentor,Final Idea\n';
-
-finalizedTeams.forEach(team => {
-    const leader = getStudentById(team.leader)?.name || '';
-    const members = team.members
-        .filter(memberId => memberId !== team.leader)
-        .map(memberId => getStudentById(memberId)?.name || '')
-        .join('\n');
-
-    function q(val) { return `"${(val||'').replace(/"/g, '""')}"`; }
-
-    csvContent += [
-        q(team.name),
-        q(leader),
-        q(members),
-        q(team.final_mentor),
-        q(team.final_idea)
-    ].join(',') + '\n';
-});
-
-
-
+ 
+        // Process each finalized team
+        finalizedTeams.forEach(team => {
+            // Get leader name safely
+            const leaderName = getStudentNameById(team.leader) || 'Unknown';
+            // Get other member names (excluding leader)
+            const otherMembers = team.members
+                .filter(memberId => memberId !== team.leader)
+                .map(memberId => getStudentNameById(memberId) || 'Unknown')
+                .join('; ');
+ 
+            // Escape function for CSV values
+            function escapeCSVValue(val) {
+                if (val == null) return '';
+                const str = String(val);
+                // If contains comma, quote, or newline, wrap in quotes and escape internal quotes
+                if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            }
+ 
+            // Create CSV row
+            const row = [
+                escapeCSVValue(team.name),
+                escapeCSVValue(leaderName),
+                escapeCSVValue(otherMembers),
+                escapeCSVValue(team.final_mentor),
+                escapeCSVValue(team.final_idea)
+            ].join(',');
+ 
+            csvContent += row + '\n';
+        });
+ 
         // Add BOM for Excel compatibility
         const BOM = '\uFEFF';
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        // Create download link
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
         link.setAttribute('download', `final_team_list_${new Date().toISOString().split('T')[0]}.csv`);
         link.style.visibility = 'hidden';
+        // Trigger download
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-    });
+ 
+        console.log('CSV export completed successfully');
+ 
+    } catch (error) {
+        console.error('Error exporting final list to CSV:', error);
+        alert('Error exporting data: ' + error.message);
+    }
 }
 
 
@@ -3313,3 +3339,4 @@ window.toggleAccessCodeInput = toggleAccessCodeInput;
 window.validateAllAccessCodes = validateAllAccessCodes;
 window.validateStudentAccessCode = validateStudentAccessCode;
 window.getStudentNameById = getStudentNameById;
+window.exportFinalListToCSV = exportFinalListToCSV;
