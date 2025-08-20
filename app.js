@@ -1323,34 +1323,27 @@ function exportFinalListToCSV() {
             return;
         }
 
-        // Header row (matches your second screenshot)
-        let csvContent = 'name,members,mentor_preferences,project_ideas,final_mentor,final_idea\n';
+        let csvContent = 'Team Name,Team Leader,Team Members,Final Mentor,Final Idea\n';
 
-        finalizedTeams.forEach(team => {
-            // Members, mentors, ideas as newline-separated strings—each team is only one row.
-            const members = team.members.map(memberId => {
-                const student = getStudentById(memberId);
-                return student ? student.name : '';
-            }).join('\n');
+finalizedTeams.forEach(team => {
+    // Use your getStudentById, which only gives name
+    const leader = getStudentById(team.leader)?.name || '';
+    const members = team.members.map(memberId => getStudentById(memberId)?.name || '').join('\n');
+    // These should already be plain text, not arrays with access codes
 
-            const mentorPreferences = (team.mentor_preferences || []).map(index =>
-                appData.mentors[index] || ''
-            ).join('\n');
+    // Always wrap with quotes for Excel, to handle newlines, etc.
+    function q(val) { return `"${(val||'').replace(/"/g, '""')}"`; }
 
-            const projectIdeas = (team.project_ideas || []).join('\n');
+    csvContent += [
+        q(team.name),
+        q(leader),
+        q(members),
+        q(team.final_mentor),
+        q(team.final_idea)
+    ].join(',') + '\n';
+});
 
-            // Always wrap each value in quotes, so Excel handles newlines correctly
-            function q(val) { return `"${(val||'').replace(/"/g, '""')}"`; }
 
-            csvContent += [
-                q(team.name),
-                q(members),
-                q(mentorPreferences),
-                q(projectIdeas),
-                q(team.final_mentor),
-                q(team.final_idea)
-            ].join(',') + '\n';
-        });
 
         // Add BOM for Excel compatibility
         const BOM = '\uFEFF';
