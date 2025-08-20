@@ -1245,12 +1245,10 @@ async function loadFinalList() {
 
 function displayFinalList(teams) {
     const container = document.getElementById('final-list-display');
-    
     if (teams.length === 0) {
         container.innerHTML = '<div class="empty-state"><p>No finalized teams found.</p></div>';
         return;
     }
-    
     let html = `
         <div class="final-list-table-container">
             <table class="final-list-table">
@@ -1265,31 +1263,30 @@ function displayFinalList(teams) {
                 </thead>
                 <tbody>
     `;
-    
-   teams.forEach(team => {
-    const memberNames = team.members.map(memberId => getStudentNameById(memberId));
-    html += `
-        <tr>
-            <td class="team-name-cell">${team.name}</td>
-            <td class="members-cell">
-                ${memberNames.map(name => `<div class="member-item">${name}</div>`).join('')}
-            </td>
-            <td class="final-mentor-cell">${team.final_mentor}</td>
-            <td class="final-idea-cell">${team.final_idea}</td>
-        </tr>
-    `;
-});
-
-    
+    teams.forEach(team => {
+        const leaderName = getStudentNameById(team.leader);
+        const memberNames = team.members
+            .filter(memberId => memberId !== team.leader)
+            .map(memberId => getStudentNameById(memberId));
+        html += `
+            <tr>
+                <td class="team-name-cell">${team.name}</td>
+                <td class="team-leader-cell">${leaderName}</td>
+                <td class="members-cell">
+                    ${memberNames.map(name => `<div class="member-item">${name}</div>`).join('')}
+                </td>
+                <td class="final-mentor-cell">${team.final_mentor}</td>
+                <td class="final-idea-cell">${team.final_idea}</td>
+            </tr>
+        `;
+    });
     html += `
                 </tbody>
             </table>
         </div>
     `;
-    
     container.innerHTML = html;
 }
-
 
 function exportFinalListToCSV() {
     if (!isFinalListHODLoggedIn) return;
@@ -1309,12 +1306,12 @@ function exportFinalListToCSV() {
         let csvContent = 'Team Name,Team Leader,Team Members,Final Mentor,Final Idea\n';
 
 finalizedTeams.forEach(team => {
-    // Use your getStudentById, which only gives name
     const leader = getStudentById(team.leader)?.name || '';
-    const members = team.members.map(memberId => getStudentById(memberId)?.name || '').join('\n');
-    // These should already be plain text, not arrays with access codes
+    const members = team.members
+        .filter(memberId => memberId !== team.leader)
+        .map(memberId => getStudentById(memberId)?.name || '')
+        .join('\n');
 
-    // Always wrap with quotes for Excel, to handle newlines, etc.
     function q(val) { return `"${(val||'').replace(/"/g, '""')}"`; }
 
     csvContent += [
