@@ -1256,10 +1256,9 @@ function displayFinalList(teams) {
             <table class="final-list-table">
                 <thead>
                     <tr>
-                        <th>Name</th>
+                        <th>Team Name</th>
+                        <th>Team Leader</th>
                         <th>Members</th>
-                        <th>Mentor Preferences</th>
-                        <th>Project Ideas</th>
                         <th>Final Mentor</th>
                         <th>Final Idea</th>
                     </tr>
@@ -1267,36 +1266,20 @@ function displayFinalList(teams) {
                 <tbody>
     `;
     
-    teams.forEach(team => {
-        // 🔥 FIX: Get member names properly without access codes
-        const memberNames = team.members.map(memberId => getStudentNameById(memberId));
-        
-        // Get mentor preferences
-        const mentorPreferences = team.mentor_preferences || [];
-        const mentorNames = mentorPreferences.map(index => 
-            appData.mentors[index] || 'Unknown'
-        );
-        
-        // Get project ideas
-        const projectIdeas = team.project_ideas || [];
-        
-        html += `
-            <tr>
-                <td class="team-name-cell">${team.name}</td>
-                <td class="members-cell">
-                    ${memberNames.map(name => `<div class="member-item">${name}</div>`).join('')}
-                </td>
-                <td class="preferences-cell">
-                    ${mentorNames.map(name => `<div class="preference-item">${name}</div>`).join('')}
-                </td>
-                <td class="ideas-cell">
-                    ${projectIdeas.map(idea => `<div class="idea-item">${idea}</div>`).join('')}
-                </td>
-                <td class="final-mentor-cell">${team.final_mentor}</td>
-                <td class="final-idea-cell">${team.final_idea}</td>
-            </tr>
-        `;
-    });
+   teams.forEach(team => {
+    const memberNames = team.members.map(memberId => getStudentNameById(memberId));
+    html += `
+        <tr>
+            <td class="team-name-cell">${team.name}</td>
+            <td class="members-cell">
+                ${memberNames.map(name => `<div class="member-item">${name}</div>`).join('')}
+            </td>
+            <td class="final-mentor-cell">${team.final_mentor}</td>
+            <td class="final-idea-cell">${team.final_idea}</td>
+        </tr>
+    `;
+});
+
     
     html += `
                 </tbody>
