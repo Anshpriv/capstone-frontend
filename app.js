@@ -1324,7 +1324,7 @@ function exportFinalListToCSV() {
         }
 
         // Header row (matches your second screenshot)
-        let csvContent = 'name,members,mentor_preferences,project_ideas,final_mentor,final_idea\n';
+        let csvContent = 'name,members,final_mentor,final_idea\n';
 
         finalizedTeams.forEach(team => {
             // Members, mentors, ideas as newline-separated strings—each team is only one row.
@@ -1333,11 +1333,7 @@ function exportFinalListToCSV() {
                 return student ? student.name : '';
             }).join('\n');
 
-            const mentorPreferences = (team.mentor_preferences || []).map(index =>
-                appData.mentors[index] || ''
-            ).join('\n');
-
-            const projectIdeas = (team.project_ideas || []).join('\n');
+            
 
             // Always wrap each value in quotes, so Excel handles newlines correctly
             function q(val) { return `"${(val||'').replace(/"/g, '""')}"`; }
