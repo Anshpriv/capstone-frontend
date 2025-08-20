@@ -2976,38 +2976,70 @@ async function exportMentorSelectionsToCSV() {
 // ====== EXPORT FUNCTIONS ======
 async function exportTeamsToCSV() {
     const teams = await getTeams();
-    
-    if (teams.length === 0) {
+    if (!teams || teams.length === 0) {
         alert('No teams to export.');
         return;
     }
-    
-    const headers = ['Team Name', 'Leader', 'Leader Department', 'All Members', 'Department Distribution', 
-                    'Mentor 1st Choice', 'Mentor 2nd Choice', 'Mentor 3rd Choice', 'Mentor 4th Choice',
-                    'Project Idea 1', 'Project Idea 2', 'Project Idea 3', 'Registration Date'];
-    
-    const csvContent = [
-        headers.join(','),
-        ...teams.map(team => {
-            const leader = getStudentById(team.leader);
-            const allMembers = team.members.map(id => getStudentById(id)?.name).join('; ');
-            const deptDist = getDepartmentDistribution(team.members);
-            const mentors = team.mentor_preferences.map(index => appData.mentors[index]);
-            
-            return [
-                `"${team.name}"`,
-                `"${leader?.name}"`,
-                `"${leader?.department}"`,
-                `"${allMembers}"`,
-                `"${deptDist}"`,
-                ...mentors.map(m => `"${m}"`),
-                ...team.project_ideas.map(idea => `"${idea}"`),
-                `"${new Date(team.registration_date).toLocaleDateString()}"`
-            ].join(',');
-        })
-    ].join('\n');
-    
-    downloadCSV(csvContent, 'capstone_teams.csv');
+ 
+    // Helper: escape quotes and wrap with quotes
+    const q = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+ 
+    // Header row to match the screenshot
+    const headers = [
+        'Team name',
+        'Team Leader',
+        'Team members',
+        'Mentor Preferences',
+        'Ideas'
+    ];
+ 
+    // Build CSV rows
+    const rows = [headers.join(',')];
+ 
+    teams.forEach(team => {
+        // Leader name
+        const leaderName = getStudentNameById(team.leader);
+ 
+        // Members: one per line in same cell (leader first, then others if not duplicated)
+        const memberNames = [];
+        if (team.leader) {
+            memberNames.push(getStudentNameById(team.leader));
+        }
+        if (Array.isArray(team.members)) {
+            team.members.forEach(id => {
+                const nm = getStudentNameById(id);
+                // Avoid duplicate if leader is included in members array
+                if (!memberNames.includes(nm)) memberNames.push(nm);
+            });
+        }
+        const membersCell = memberNames.join('\n');
+ 
+        // Mentor Preferences: turn indices into names, one per line
+        const mentorPrefs = Array.isArray(team.mentor_preferences)
+            ? team.mentor_preferences.map(idx => appData.mentors[idx] || '').join('\n')
+            : '';
+ 
+        // Ideas: one per line
+        const ideasCell = Array.isArray(team.project_ideas)
+            ? team.project_ideas.join('\n')
+            : '';
+ 
+        const row = [
+            q(team.name || ''),         // Team name
+            q(leaderName || ''),        // Team Leader
+            q(membersCell),             // Team members (multiline)
+            q(mentorPrefs),             // Mentor Preferences (multiline)
+            q(ideasCell)                // Ideas (multiline)
+        ].join(',');
+ 
+        rows.push(row);
+    });
+ 
+    // Prepend BOM so Excel recognizes UTF-8 and respects \n line breaks within cells
+    const BOM = '\uFEFF';
+    const csvContent = BOM + rows.join('\n');
+ 
+    downloadCSV(csvContent, 'capstone_team_export.csv');
 }
 
 function downloadCSV(content, filename) {
