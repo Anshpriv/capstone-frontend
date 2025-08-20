@@ -1314,28 +1314,30 @@ async function exportFinalListToCSV() {
         finalizedTeams.forEach(team => {
             // Get leader name safely
             const leaderName = getStudentNameById(team.leader) || 'Unknown';
-            // Get other member names (excluding leader)
+            // Get other member names (excluding leader) and join with line breaks
             const otherMembers = team.members
                 .filter(memberId => memberId !== team.leader)
                 .map(memberId => getStudentNameById(memberId) || 'Unknown')
-                .join('; ');
+                .join('\n'); // ← Changed from '; ' to '\n' for line breaks
  
             // Escape function for CSV values
             function escapeCSVValue(val) {
                 if (val == null) return '';
                 const str = String(val);
-                // If contains comma, quote, or newline, wrap in quotes and escape internal quotes
-                if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-                    return '"' + str.replace(/"/g, '""') + '"';
+                // Replace double quotes with double-double quotes for CSV escaping
+                const escaped = str.replace(/"/g, '""');
+                // If contains comma, quote, or newline, wrap in quotes
+                if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n') || escaped.includes('\r')) {
+                    return '"' + escaped + '"';
                 }
-                return str;
+                return escaped;
             }
  
             // Create CSV row
             const row = [
                 escapeCSVValue(team.name),
                 escapeCSVValue(leaderName),
-                escapeCSVValue(otherMembers),
+                escapeCSVValue(otherMembers), // This will now contain line breaks
                 escapeCSVValue(team.final_mentor),
                 escapeCSVValue(team.final_idea)
             ].join(',');
@@ -1365,12 +1367,6 @@ async function exportFinalListToCSV() {
         alert('Error exporting data: ' + error.message);
     }
 }
-
-
-
-
-
-
 
 
 // Update the populateSelects function to also populate leader department
