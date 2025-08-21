@@ -3059,7 +3059,7 @@ function setupCharacterCounters() {
         if (textarea && counter) {
             textarea.addEventListener('input', function() {
                 const length = this.value.length;
-                const maxLength = 500;
+                const maxLength = 5000;
                 counter.textContent = `${length}/${maxLength} characters`;
                 
                 if (length > maxLength * 0.9) {
