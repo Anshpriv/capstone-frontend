@@ -404,27 +404,28 @@
         </div>
 
         <!-- View Teams -->
-        <div id="view-teams" class="page">
-            <div class="dashboard-container">
-                <div class="dashboard-header">
-                    <h2>Registered Teams</h2>
-                    <div class="dashboard-actions">
-                        <button class="btn btn--primary" onclick="exportTeamsToCSV()">Export Teams (CSV)</button>
-                        <button class="btn btn--secondary" onclick="backToDashboardWithLogout('edit-teams')">Back to Dashboard</button>
-                    </div>
-                </div>
-                
-                <div id="teams-display" class="teams-section">
-                    <div id="teams-list"></div>
-                </div>
-
-                <div id="remaining-students" class="remaining-students-section">
-                    <h3>Unregistered Students</h3>
-                    <p>Students not assigned to any team, organized by department</p>
-                    <div id="remaining-students-display"></div>
-                </div>
+       <!-- View Teams -->
+<div id="view-teams" class="page">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h2>Registered Teams</h2>
+            <div class="dashboard-actions">
+                <button class="btn btn--secondary" onclick="backToDashboardWithLogout('edit-teams')">Back to Dashboard</button>
             </div>
         </div>
+        
+        <div id="teams-display" class="teams-section">
+            <div id="teams-list"></div>
+        </div>
+
+        <div id="remaining-students" class="remaining-students-section">
+            <h3>Unregistered Students</h3>
+            <p>Students not assigned to any team, organized by department</p>
+            <div id="remaining-students-display"></div>
+        </div>
+    </div>
+</div>
+
 
         <!-- Team Management (Delete Function) -->
         <div id="team-management" class="page">
